@@ -9,7 +9,55 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.1/control_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.1/drawing_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/face_detection.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.1/holistic.js" crossorigin="anonymous"></script>
+  <style>
+    .prediction-box {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      max-width: 300px;
+      z-index: 10;
+    }
+    .prediction-text {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .confidence-text {
+      font-size: 14px;
+      color: #4CAF50;
+    }
+    .error-text {
+      font-size: 14px;
+      color: #f44336;
+    }
+    .top-predictions {
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    .prediction-item {
+      margin: 2px 0;
+      padding: 2px 5px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    .loading-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px 20px;
+      border-radius: 5px;
+      z-index: 15;
+    }
+  </style>
 </head>
 
 <body>
@@ -49,29 +97,37 @@
         <a class="navbar-item" href="holistic.html">
           Holistic
         </a>
-        
-        <a class="navbar-item" href="isl_prediction.html">
+
+        <a class="navbar-item is-active" href="isl_prediction.html">
           ISL Prediction
         </a>
-        </div>
       </div>
-  
     </div>
   </nav>
 
   <!-- CONTENTS -->
   <div class="container" style="margin-top: 20px;">
-
+    
     <div class="columns">
       
       <!-- WEBCAM INPUT -->
       <div class="column">
         <article class="panel is-info">
           <p class="panel-heading">
-            Webcam Input
+            Webcam Input - ISL Prediction
           </p>
           <div class="panel-block">
-            <video class="input_video1"></video>
+            <div style="position: relative;">
+              <video class="input_video1"></video>
+              <div id="predictionBox" class="prediction-box" style="display: none;">
+                <div class="prediction-text" id="predictionText">Ready...</div>
+                <div class="confidence-text" id="confidenceText">Confidence: 0%</div>
+                <div class="top-predictions" id="topPredictions"></div>
+              </div>
+              <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                Predicting...
+              </div>
+            </div>
           </div>
         </article>
       </div>
@@ -80,7 +136,7 @@
       <div class="column">
         <article class="panel is-info">
           <p class="panel-heading">
-            Mediapipe Face Detection
+            MediaPipe Holistic + ISL Detection
           </p>
           <div class="panel-block">
             <canvas class="output1" width="480px" height="480px"></canvas>
@@ -92,11 +148,35 @@
     <div class="loading">
       <div class="spinner"></div>
     </div>
+
+    <!-- INFO PANEL -->
+    <div class="columns" style="margin-top: 20px;">
+      <div class="column">
+        <article class="panel is-warning">
+          <p class="panel-heading">
+            Instructions
+          </p>
+          <div class="panel-block">
+            <div>
+              <p><strong>How to use:</strong></p>
+              <ul>
+                <li>Make sure the backend server is running on <code>http://localhost:8000</code></li>
+                <li>Allow camera access when prompted</li>
+                <li>Perform Indian Sign Language gestures in front of the camera</li>
+                <li>The system will predict the gesture in real-time</li>
+                <li>Predictions appear in the top-left corner with confidence scores</li>
+              </ul>
+              <p><strong>Supported gestures:</strong> All 263 ISL signs including basic words like "hello", "thank you", "good", "bad", etc.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
   </div>
 
   <div style="visibility: hidden;" class="control1">
   </div>
 
-  <script type="text/javascript" src="./js/face.js"></script>
+  <script type="text/javascript" src="./js/isl_prediction.js"></script>
 </body>
 </html>
