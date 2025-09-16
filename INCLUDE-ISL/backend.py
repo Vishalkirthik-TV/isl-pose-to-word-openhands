@@ -1,6 +1,7 @@
 # backend.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 import torch
 import torch.nn as nn
@@ -268,6 +269,52 @@ async def predict(request: KeypointsRequest):
         
     except Exception as e:
         return {"error": str(e), "prediction": None}
+
+# ------------------------
+# WebSocket for realtime predictions
+# ------------------------
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_json()
+            if bert_model is None:
+                await websocket.send_json({"error": "Model not loaded"})
+                continue
+
+            keypoints = data.get("keypoints", [])
+            try:
+                np_kp = np.array(keypoints, dtype=np.float32)
+                expected_points = 18
+                expected_coords = 3
+
+                total_points = len(np_kp) // expected_coords
+                if total_points % expected_points != 0:
+                    await websocket.send_json({"error": "Invalid keypoints length"})
+                    continue
+
+                frames = total_points // expected_points
+                np_kp = np_kp.reshape(1, frames, expected_points, expected_coords)
+                input_tensor = torch.tensor(np_kp, dtype=torch.float32)
+
+                with torch.no_grad():
+                    logits = bert_model(input_tensor)
+                    probabilities = torch.softmax(logits, dim=-1)
+                    predicted_class = torch.argmax(logits, dim=-1).item()
+                    confidence = float(probabilities[0, predicted_class].item())
+
+                prediction_text = index_to_word.get(predicted_class, f"class_{predicted_class}")
+
+                await websocket.send_json({
+                    "prediction": prediction_text,
+                    "class_id": predicted_class,
+                    "confidence": confidence
+                })
+            except Exception as e:
+                await websocket.send_json({"error": str(e)})
+    except WebSocketDisconnect:
+        pass
 
 if __name__ == "__main__":
     import uvicorn
